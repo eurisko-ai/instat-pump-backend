@@ -59,20 +59,30 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
     }
 
     const prompt = [
-      'You are a memecoin creator. Analyze this page content and generate a fun memecoin based on it.',
+      'You are a memecoin creator analyzing news/web content. Your task is to extract the MAIN TOPIC and create a fun memecoin based on it.',
+      '',
+      'CRITICAL: Focus on the PRIMARY subject/event of the content, NOT secondary mentions or people mentioned in passing.',
+      '',
       'Page Title: ' + (pageTitle || 'Untitled'),
       'Page Description: ' + (pageDescription || 'None'),
       '',
-      'From the page content, identify the main topic/theme and create:',
-      '1. A catchy memecoin NAME (1-3 words, fun, related to the topic)',
-      '2. A SYMBOL (3-6 uppercase letters, derived from name)',
-      '3. A brief DESCRIPTION (1-2 sentences explaining the memecoin concept)',
+      'INSTRUCTIONS:',
+      '1. Identify the MAIN TOPIC or PRIMARY SUBJECT of this content (ignore secondary mentions)',
+      '2. Think about what this story is REALLY about - the core theme or event',
+      '3. Create a memecoin NAME that captures the essence of this main topic (1-3 words, fun, creative)',
+      '4. Create a SYMBOL derived from the name (3-6 uppercase letters)',
+      '5. Write a brief DESCRIPTION explaining the memecoin concept related to the main topic',
       '',
-      'Return ONLY valid JSON in this format:',
-      '{"name":"YourCoinName","symbol":"YSC","description":"Description here"}',
+      'EXAMPLES:',
+      '- Article about "Tech CEO arrested": Main topic = tech scandal/justice → "JusticeCode" or "TechFail"',
+      '- Article about "Celebrity dies": Main topic = tribute/legacy → "LegacyMem" or "TributeCoin"',
+      '- Article about "Stock market crash": Main topic = market chaos → "CrashTest" or "MarketDoom"',
       '',
-      'Page Content:',
-      pageContent.slice(0, 3000), // Send full content but limit size
+      'Return ONLY valid JSON in this exact format:',
+      '{"name":"CoinName","symbol":"COIN","description":"Description here"}',
+      '',
+      'PAGE CONTENT:',
+      pageContent.slice(0, 3000),
     ].join('\n');
 
     let parsed: Partial<GeneratedMetadata> | null = null;

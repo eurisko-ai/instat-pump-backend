@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { initializeDatabase, AppDataSource } from './database/DataSource';
 import metadataRouter from './routes/metadata';
 import publishRouter from './routes/publish';
+import imageRouter from './routes/image';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ limit: '50mb' }));
 // metadataRouter includes /api/metadata and /api/generate-metadata
 app.use(metadataRouter);
 app.use(publishRouter);
+app.use(imageRouter);
 
 // Health check
 app.get('/health', (req, res) => {
