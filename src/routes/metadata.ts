@@ -84,16 +84,22 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       const ollamaUrl = process.env.OLLAMA_URL || 'http://host.docker.internal:11434/api/generate';
       console.log('[Metadata] Ollama URL:', ollamaUrl);
       
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      
       const ollamaResponse = await fetch(ollamaUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+          model: process.env.OLLAMA_MODEL || 'phi:latest',
           prompt,
           stream: false,
           options: { temperature: 0.7 },
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeout);
 
       if (ollamaResponse.ok) {
         const data = (await ollamaResponse.json()) as { response?: string };
