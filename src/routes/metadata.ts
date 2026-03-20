@@ -81,18 +81,25 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
     // Try Ollama first
     try {
       console.log('[Metadata] Attempting Ollama analysis...');
-      // Use host.docker.internal on Docker for Mac/Windows, or 127.0.0.1:11434 on Linux host network
-      const ollamaUrl = process.env.OLLAMA_URL || 'http://host.docker.internal:11434/api/generate';
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://172.29.0.1:11434/api/generate';
+      const ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:3b';
+      
       console.log('[Metadata] Ollama URL:', ollamaUrl);
+      console.log('[Metadata] Ollama Model:', ollamaModel);
       
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      const timeoutMs = 90000; // 90 second timeout
+      const timeout = setTimeout(() => {
+        console.log('[Metadata] ⏱️ Timeout after', timeoutMs, 'ms');
+        controller.abort();
+      }, timeoutMs);
       
+      console.log('[Metadata] Sending request to Ollama...');
       const ollamaResponse = await fetch(ollamaUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: process.env.OLLAMA_MODEL || 'phi:latest',
+          model: ollamaModel,
           prompt,
           stream: false,
           options: { temperature: 0.7 },
@@ -101,6 +108,7 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       });
       
       clearTimeout(timeout);
+      console.log('[Metadata] Ollama response status:', ollamaResponse.status);
 
       if (ollamaResponse.ok) {
         const data = (await ollamaResponse.json()) as { response?: string };
