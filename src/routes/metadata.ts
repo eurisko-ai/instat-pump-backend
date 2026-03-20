@@ -104,10 +104,16 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
 
       if (ollamaResponse.ok) {
         const data = (await ollamaResponse.json()) as { response?: string };
+        console.log('[Metadata] Ollama raw response:', data.response?.slice(0, 200));
         parsed = parseJsonResponse(data.response || '');
-        console.log('[Metadata] Ollama analysis complete:', parsed);
+        console.log('[Metadata] Ollama parsed result:', parsed);
+        if (parsed?.name && parsed?.symbol) {
+          console.log('[Metadata] ✅ Ollama analysis complete');
+        } else {
+          console.log('[Metadata] ⚠️ Ollama response missing required fields, using fallback');
+        }
       } else {
-        console.log('[Metadata] Ollama unavailable, using fallback');
+        console.log('[Metadata] Ollama unavailable (status ' + ollamaResponse.status + '), using fallback');
       }
     } catch (error) {
       console.log('[Metadata] Ollama connection failed, using fallback:', error);
