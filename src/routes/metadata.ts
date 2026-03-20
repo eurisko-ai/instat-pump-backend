@@ -48,29 +48,84 @@ const parseJsonResponse = (raw: string): Partial<GeneratedMetadata> | null => {
  */
 router.post('/api/generate-metadata', async (req: Request, res: Response) => {
   try {
-    const { pageContent } = req.body as { pageContent?: string };
+    const { pageTitle, pageContent, pageDescription } = req.body as { 
+      pageTitle?: string; 
+      pageContent?: string;
+      pageDescription?: string;
+    };
 
     if (!pageContent || typeof pageContent !== 'string') {
       return res.status(400).json({ error: 'pageContent is required' });
     }
 
-    // Always use mock metadata for now (Ollama not available in this environment)
-    const words = (pageContent || 'Crypto')
-      .split(/\s+/)
-      .filter(w => w.length > 3)
-      .slice(0, 2);
-    
-    const mockName = words.length > 0 
-      ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
-      : 'CryptoMeme';
-    
-    const mockSymbol = mockName.slice(0, 4).toUpperCase().padEnd(3, 'X').slice(0, 6);
+    const prompt = [
+      'You are a memecoin creator. Analyze this page content and generate a fun memecoin based on it.',
+      'Page Title: ' + (pageTitle || 'Untitled'),
+      'Page Description: ' + (pageDescription || 'None'),
+      '',
+      'From the page content, identify the main topic/theme and create:',
+      '1. A catchy memecoin NAME (1-3 words, fun, related to the topic)',
+      '2. A SYMBOL (3-6 uppercase letters, derived from name)',
+      '3. A brief DESCRIPTION (1-2 sentences explaining the memecoin concept)',
+      '',
+      'Return ONLY valid JSON in this format:',
+      '{"name":"YourCoinName","symbol":"YSC","description":"Description here"}',
+      '',
+      'Page Content:',
+      pageContent.slice(0, 3000), // Send full content but limit size
+    ].join('\n');
 
-    const parsed = {
-      name: mockName,
-      symbol: mockSymbol,
-      description: `A memecoin based on: ${pageContent.slice(0, 100)}...`,
-    };
+    let parsed: Partial<GeneratedMetadata> | null = null;
+
+    // Try Ollama first
+    try {
+      console.log('[Metadata] Attempting Ollama analysis...');
+      // Use host.docker.internal on Docker for Mac/Windows, or 127.0.0.1:11434 on Linux host network
+      const ollamaUrl = process.env.OLLAMA_URL || 'http://host.docker.internal:11434/api/generate';
+      console.log('[Metadata] Ollama URL:', ollamaUrl);
+      
+      const ollamaResponse = await fetch(ollamaUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+          prompt,
+          stream: false,
+          options: { temperature: 0.7 },
+        }),
+      });
+
+      if (ollamaResponse.ok) {
+        const data = (await ollamaResponse.json()) as { response?: string };
+        parsed = parseJsonResponse(data.response || '');
+        console.log('[Metadata] Ollama analysis complete:', parsed);
+      } else {
+        console.log('[Metadata] Ollama unavailable, using fallback');
+      }
+    } catch (error) {
+      console.log('[Metadata] Ollama connection failed, using fallback:', error);
+    }
+
+    // Fallback: mock metadata if Ollama fails
+    if (!parsed?.name || !parsed?.symbol || !parsed?.description) {
+      console.log('[Metadata] Using mock metadata fallback');
+      const words = (pageTitle || pageContent || 'Crypto')
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+        .slice(0, 2);
+      
+      const mockName = words.length > 0 
+        ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
+        : 'CryptoMeme';
+      
+      const mockSymbol = mockName.slice(0, 4).toUpperCase().padEnd(3, 'X').slice(0, 6);
+
+      parsed = {
+        name: mockName,
+        symbol: mockSymbol,
+        description: `A memecoin inspired by: ${(pageTitle || pageContent).slice(0, 50)}...`,
+      };
+    }
 
     const name = String(parsed.name || '').trim();
     const description = String(parsed.description || '').trim();
