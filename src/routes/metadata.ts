@@ -121,7 +121,8 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
           console.log('[Metadata] ⚠️ Ollama response missing required fields, using fallback');
         }
       } else {
-        console.log('[Metadata] Ollama unavailable (status ' + ollamaResponse.status + '), using fallback');
+        const errorText = await ollamaResponse.text();
+        console.log('[Metadata] ❌ Ollama error (status ' + ollamaResponse.status + '):', errorText.slice(0, 200));
       }
     } catch (error) {
       console.log('[Metadata] Ollama connection failed, using fallback:', error);
