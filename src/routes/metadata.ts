@@ -58,36 +58,22 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'pageContent is required' });
     }
 
-    // Extract main topic from title first
-    const mainTopicFromTitle = (pageTitle || '')
-      .split(' - ')[0]
-      .split('|')[0]
-      .trim();
-
     const prompt = [
-      'You are a memecoin creator. Your ONLY task: Extract the PRIMARY SUBJECT from the page title and create a memecoin based on THAT, ignoring all other names/people mentioned in the content.',
-      '',
-      'PRIMARY SUBJECT FROM TITLE: ' + mainTopicFromTitle,
+      'Create a memecoin based on this news article.',
       'Page Title: ' + (pageTitle || 'Untitled'),
-      'Page Description: ' + (pageDescription || 'None'),
       '',
-      '⚠️ CRITICAL RULES:',
-      '- IGNORE secondary people/names mentioned in the content (tributes, commentaries, etc.)',
-      '- FOCUS ONLY on the main headline subject',
-      '- Create the memecoin based on the HEADLINE topic, not supporting cast',
-      '- If title mentions "X dies" → coin about X, NOT about who paid tribute',
-      '- If title mentions "Event happens" → coin about Event, NOT about reactions',
+      'Analyze the MAIN SUBJECT of the article title (not secondary mentions).',
+      'Generate creative memecoin metadata.',
       '',
-      'EXAMPLES:',
-      '- Title: "John dies, family pays tribute" → Coin about JOHN, not the family',
-      '- Title: "Tesla crashes, CEO reacts" → Coin about TESLA, not the CEO',
-      '- Title: "Action star passes, tribute night" → Coin about ACTION STAR/LEGACY, not attendees',
+      'Return ONLY this JSON (replace placeholders with creative names):',
+      '{',
+      '  "name": "CreativeCoinName",',
+      '  "symbol": "CCC",',
+      '  "description": "Short fun description"',
+      '}',
       '',
-      'Return ONLY valid JSON:',
-      '{"name":"CoinName","symbol":"COIN","description":"Description here"}',
-      '',
-      'PAGE CONTENT:',
-      pageContent.slice(0, 3000),
+      'Article content:',
+      pageContent.slice(0, 2000),
     ].join('\n');
 
     let parsed: Partial<GeneratedMetadata> | null = null;
