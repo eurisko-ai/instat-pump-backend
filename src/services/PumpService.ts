@@ -1,5 +1,5 @@
 import { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
-import { PUMP_SDK } from '@pump-fun/pump-sdk';
+import { PUMP_SDK } from '../sdk/PumpSDK';
 import fs from 'fs';
 import path from 'path';
 
