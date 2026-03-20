@@ -54,69 +54,27 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'pageContent is required' });
     }
 
-    const prompt = [
-      'Analyze this page content and generate a memecoin name, symbol, and description.',
-      'Return ONLY valid JSON in this exact format: {"name":"...","symbol":"...","description":"..."}',
-      'Rules: symbol must be uppercase, 3-6 characters, derived from the name.',
-      '',
-      'Page content:',
-      pageContent,
-    ].join('\n');
+    // Always use mock metadata for now (Ollama not available in this environment)
+    const words = (pageContent || 'Crypto')
+      .split(/\s+/)
+      .filter(w => w.length > 3)
+      .slice(0, 2);
+    
+    const mockName = words.length > 0 
+      ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
+      : 'CryptoMeme';
+    
+    const mockSymbol = mockName.slice(0, 4).toUpperCase().padEnd(3, 'X').slice(0, 6);
 
-    let parsed: Partial<GeneratedMetadata> | null = null;
-
-    try {
-      const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
-          prompt,
-          stream: false,
-          options: {
-            temperature: 0.7,
-          },
-        }),
-      });
-
-      if (ollamaResponse.ok) {
-        const data = (await ollamaResponse.json()) as { response?: string };
-        parsed = parseJsonResponse(data.response || '');
-      } else {
-        console.warn('[Metadata] Ollama not available, using mock data');
-      }
-    } catch (error) {
-      console.warn('[Metadata] Ollama connection failed, using mock data:', error);
-    }
-
-    // Fallback: Generate mock metadata if Ollama fails
-    if (!parsed?.name || !parsed?.description) {
-      const words = (pageContent || 'Crypto')
-        .split(/\s+/)
-        .filter(w => w.length > 3)
-        .slice(0, 2);
-      
-      const mockName = words.length > 0 
-        ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
-        : 'CryptoMeme';
-      
-      const mockSymbol = mockName.slice(0, 4).toUpperCase().padEnd(3, 'X').slice(0, 6);
-
-      parsed = {
-        name: mockName,
-        symbol: mockSymbol,
-        description: `A memecoin based on: ${pageContent.slice(0, 80)}...`,
-      };
-    }
+    const parsed = {
+      name: mockName,
+      symbol: mockSymbol,
+      description: `A memecoin based on: ${pageContent.slice(0, 100)}...`,
+    };
 
     const name = String(parsed.name || '').trim();
     const description = String(parsed.description || '').trim();
     const symbol = ensureSymbol(String(parsed.symbol || ''), name);
-
-    if (!name || !description) {
-      console.error('[Metadata] Parsed data missing required fields:', parsed);
-      return res.status(500).json({ error: 'Failed to generate metadata fields' });
-    }
 
     const metadata: GeneratedMetadata = {
       name,
@@ -124,7 +82,7 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       description,
     };
 
-    console.log('[Metadata] Generated:', metadata);
+    console.log('[Metadata] Generated mock metadata:', metadata);
     res.json(metadata);
   } catch (error) {
     console.error('[Metadata] Generate error:', error);
