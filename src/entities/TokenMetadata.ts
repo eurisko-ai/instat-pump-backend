@@ -3,56 +3,56 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 @Entity('token_metadata')
 export class TokenMetadata {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column('text')
-  name: string;
+  name!: string;
 
   @Column('text')
-  symbol: string;
+  symbol!: string;
 
   @Column('text')
-  description: string;
+  description!: string;
 
   @Column('text', { nullable: true })
-  imageUrl: string;
+  imageUrl?: string;
 
   @Column('text', { nullable: true })
-  imageBase64: string;
+  imageBase64?: string;
 
   @Column('text', { nullable: true })
-  twitter: string;
+  twitter?: string;
 
   @Column('text', { nullable: true })
-  telegram: string;
+  telegram?: string;
 
   @Column('text', { nullable: true })
-  website: string;
+  website?: string;
 
   @Column('text')
-  metadataUri: string;
+  metadataUri!: string;
 
   @Column('text', { nullable: true })
-  mintAddress: string;
+  mintAddress?: string;
 
   @Column('text', { nullable: true })
-  txSignature: string;
+  txSignature?: string;
 
-  @Column('float', { nullable: true })
-  buyAmount: number; // SOL amount for initial buy
+  @Column('float', { nullable: true, default: 0 })
+  buyAmount: number = 0;
 
   @Column('text', { default: 'pending' })
-  status: 'pending' | 'generating' | 'created' | 'buying' | 'deployed' | 'failed';
+  status: 'pending' | 'generating' | 'created' | 'buying' | 'deployed' | 'failed' = 'pending';
 
   @Column('text', { nullable: true })
-  errorMessage: string;
+  errorMessage?: string;
 
   @Column('text', { nullable: true })
-  creatorAddress: string;
+  creatorAddress?: string;
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
+  updatedAt!: Date;
 }

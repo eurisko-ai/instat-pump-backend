@@ -2,9 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies
+# Install all dependencies (needed for TypeScript compilation)
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --legacy-peer-deps
 
 # Copy source code
 COPY tsconfig.json ./
@@ -23,5 +23,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 3000
 
-# Run migrations and start server
-CMD ["sh", "-c", "npm run migration:run && npm start"]
+# Start server (migrations run automatically on app startup)
+CMD ["npm", "start"]

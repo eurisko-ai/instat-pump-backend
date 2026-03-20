@@ -7,9 +7,9 @@
     "dev": "ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "migration:generate": "typeorm migration:generate",
-    "migration:run": "typeorm migration:run",
-    "migration:revert": "typeorm migration:revert",
+    "migration:generate": "typeorm migration:generate -d dist/database/DataSource.js",
+    "migration:run": "typeorm migration:run -d dist/database/DataSource.js",
+    "migration:revert": "typeorm migration:revert -d dist/database/DataSource.js",
     "typeorm": "typeorm"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "axios": "^1.6.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.10.5",
     "typescript": "^5.3.3",

@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { initializeDatabase } from './database/DataSource';
+import { initializeDatabase, AppDataSource } from './database/DataSource';
 import metadataRouter from './routes/metadata';
 import publishRouter from './routes/publish';
 
@@ -35,6 +35,11 @@ async function start() {
   try {
     // Initialize database
     await initializeDatabase();
+
+    // Run migrations
+    console.log('🔄 Running migrations...');
+    const migrations = await AppDataSource.runMigrations();
+    console.log(`✅ Migrations complete: ${migrations.length} applied`);
 
     // Start server
     app.listen(PORT, () => {
