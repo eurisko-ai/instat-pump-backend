@@ -58,27 +58,32 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'pageContent is required' });
     }
 
+    // Extract main topic from title first
+    const mainTopicFromTitle = (pageTitle || '')
+      .split(' - ')[0]
+      .split('|')[0]
+      .trim();
+
     const prompt = [
-      'You are a memecoin creator analyzing news/web content. Your task is to extract the MAIN TOPIC and create a fun memecoin based on it.',
+      'You are a memecoin creator. Your ONLY task: Extract the PRIMARY SUBJECT from the page title and create a memecoin based on THAT, ignoring all other names/people mentioned in the content.',
       '',
-      'CRITICAL: Focus on the PRIMARY subject/event of the content, NOT secondary mentions or people mentioned in passing.',
-      '',
+      'PRIMARY SUBJECT FROM TITLE: ' + mainTopicFromTitle,
       'Page Title: ' + (pageTitle || 'Untitled'),
       'Page Description: ' + (pageDescription || 'None'),
       '',
-      'INSTRUCTIONS:',
-      '1. Identify the MAIN TOPIC or PRIMARY SUBJECT of this content (ignore secondary mentions)',
-      '2. Think about what this story is REALLY about - the core theme or event',
-      '3. Create a memecoin NAME that captures the essence of this main topic (1-3 words, fun, creative)',
-      '4. Create a SYMBOL derived from the name (3-6 uppercase letters)',
-      '5. Write a brief DESCRIPTION explaining the memecoin concept related to the main topic',
+      '⚠️ CRITICAL RULES:',
+      '- IGNORE secondary people/names mentioned in the content (tributes, commentaries, etc.)',
+      '- FOCUS ONLY on the main headline subject',
+      '- Create the memecoin based on the HEADLINE topic, not supporting cast',
+      '- If title mentions "X dies" → coin about X, NOT about who paid tribute',
+      '- If title mentions "Event happens" → coin about Event, NOT about reactions',
       '',
       'EXAMPLES:',
-      '- Article about "Tech CEO arrested": Main topic = tech scandal/justice → "JusticeCode" or "TechFail"',
-      '- Article about "Celebrity dies": Main topic = tribute/legacy → "LegacyMem" or "TributeCoin"',
-      '- Article about "Stock market crash": Main topic = market chaos → "CrashTest" or "MarketDoom"',
+      '- Title: "John dies, family pays tribute" → Coin about JOHN, not the family',
+      '- Title: "Tesla crashes, CEO reacts" → Coin about TESLA, not the CEO',
+      '- Title: "Action star passes, tribute night" → Coin about ACTION STAR/LEGACY, not attendees',
       '',
-      'Return ONLY valid JSON in this exact format:',
+      'Return ONLY valid JSON:',
       '{"name":"CoinName","symbol":"COIN","description":"Description here"}',
       '',
       'PAGE CONTENT:',
