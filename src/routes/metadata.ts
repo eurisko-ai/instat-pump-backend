@@ -109,9 +109,14 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       };
     }
 
-    const name = String(parsed.name).trim();
-    const description = String(parsed.description).trim();
+    const name = String(parsed.name || '').trim();
+    const description = String(parsed.description || '').trim();
     const symbol = ensureSymbol(String(parsed.symbol || ''), name);
+
+    if (!name || !description) {
+      console.error('[Metadata] Parsed data missing required fields:', parsed);
+      return res.status(500).json({ error: 'Failed to generate metadata fields' });
+    }
 
     const metadata: GeneratedMetadata = {
       name,
@@ -119,6 +124,7 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       description,
     };
 
+    console.log('[Metadata] Generated:', metadata);
     res.json(metadata);
   } catch (error) {
     console.error('[Metadata] Generate error:', error);
