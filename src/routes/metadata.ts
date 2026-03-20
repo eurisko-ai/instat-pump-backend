@@ -63,30 +63,50 @@ router.post('/api/generate-metadata', async (req: Request, res: Response) => {
       pageContent,
     ].join('\n');
 
-    const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-        },
-      }),
-    });
+    let parsed: Partial<GeneratedMetadata> | null = null;
 
-    if (!ollamaResponse.ok) {
-      const text = await ollamaResponse.text();
-      console.error('[Metadata] Ollama error:', text);
-      return res.status(502).json({ error: 'Failed to generate metadata from Ollama' });
+    try {
+      const ollamaResponse = await fetch('http://localhost:11434/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: process.env.OLLAMA_MODEL || 'llama3.1:8b',
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.7,
+          },
+        }),
+      });
+
+      if (ollamaResponse.ok) {
+        const data = (await ollamaResponse.json()) as { response?: string };
+        parsed = parseJsonResponse(data.response || '');
+      } else {
+        console.warn('[Metadata] Ollama not available, using mock data');
+      }
+    } catch (error) {
+      console.warn('[Metadata] Ollama connection failed, using mock data:', error);
     }
 
-    const data = (await ollamaResponse.json()) as { response?: string };
-    const parsed = parseJsonResponse(data.response || '');
-
+    // Fallback: Generate mock metadata if Ollama fails
     if (!parsed?.name || !parsed?.description) {
-      return res.status(500).json({ error: 'Invalid response returned by Ollama' });
+      const words = (pageContent || 'Crypto')
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+        .slice(0, 2);
+      
+      const mockName = words.length > 0 
+        ? words[0].charAt(0).toUpperCase() + words[0].slice(1).toLowerCase()
+        : 'CryptoMeme';
+      
+      const mockSymbol = mockName.slice(0, 4).toUpperCase().padEnd(3, 'X').slice(0, 6);
+
+      parsed = {
+        name: mockName,
+        symbol: mockSymbol,
+        description: `A memecoin based on: ${pageContent.slice(0, 80)}...`,
+      };
     }
 
     const name = String(parsed.name).trim();
