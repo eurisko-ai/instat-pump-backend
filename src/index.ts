@@ -22,6 +22,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb' }));
 
 // Routes
+// metadataRouter includes /api/metadata and /api/generate-metadata
 app.use(metadataRouter);
 app.use(publishRouter);
 
